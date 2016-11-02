@@ -129,6 +129,7 @@ int vl_video_encoder_encode(vl_codec_handle_t codec_handle, vl_frame_type_t fram
     if (handle->mNumInputFrames >= 0)
     {
         AMVEncFrameIO videoInput;
+        bool prependSPSPPS = false;
         memset(&videoInput, 0, sizeof(videoInput));
         videoInput.height = handle->mEncParams.height;
         videoInput.pitch = ((handle->mEncParams.width + 15) >> 4) << 4;
@@ -158,6 +159,7 @@ int vl_video_encoder_encode(vl_codec_handle_t codec_handle, vl_frame_type_t fram
             {
                 outPtr = (uint8_t *) *out + handle->mSPSPPSDataSize;
                 dataLength  = /*should be out size */in_size - handle->mSPSPPSDataSize;
+                prependSPSPPS = true;
             }
             else
             {
@@ -174,7 +176,7 @@ int vl_video_encoder_encode(vl_codec_handle_t codec_handle, vl_frame_type_t fram
         ret = AML_HWEncNAL(handle, (unsigned char *)outPtr, (unsigned int *)&dataLength, &type);
         if (ret == AMVENC_PICTURE_READY)
         {
-            if (type == AVC_NALTYPE_IDR)
+            if (type == AVC_NALTYPE_IDR && prependSPSPPS)
             {
                 if (handle->mSPSPPSData)
                 {
